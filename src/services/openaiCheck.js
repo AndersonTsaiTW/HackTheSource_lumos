@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
-import config from '../config.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const openai = new OpenAI({
-  apiKey: config.openaiApiKey,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 /**
@@ -10,7 +12,7 @@ const openai = new OpenAI({
  */
 export async function analyzeWithOpenAI(content) {
   try {
-    if (!config.openaiApiKey) {
+    if (!process.env.OPENAI_API_KEY) {
       console.warn('⚠️ OpenAI API Key not configured');
       return { isScam: false, confidence: 0, reason: 'API Key not configured' };
     }
