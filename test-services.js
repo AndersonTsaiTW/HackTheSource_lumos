@@ -56,7 +56,6 @@ if (parsed.phone) {
   console.log('⚠️  No phone number found in message');
 }
 
-/*
 // Test 3: OpenAI
 console.log('\n' + '='.repeat(70));
 console.log('🤖 Test 3: OpenAI Scam Detection API');
@@ -67,6 +66,6 @@ try {
 } catch (error) {
   console.log('❌ Error:', error.message);
 }
-*/
+
 console.log('\n' + '='.repeat(70));
 console.log('✨ All tests completed!\n');
