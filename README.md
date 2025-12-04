@@ -17,6 +17,15 @@ Introduction Document: [Lumos - Clarity_in_Digital_Trust](https://github.com/And
 - 🎨 **Risk Assessment**: Red warning (≥60), yellow caution (≥30), green safe (<30)
 - 🌐 **Web Interface**: Modern responsive UI with dark/light mode
 
+### XGBoost ML Model (Machine Learning)
+
+- 🎯 **45 Features**: Comprehensive feature engineering from text, URL, phone, AI, and statistical analysis
+- 🤖 **XGBoost Classifier**: Trained model with 78.3% accuracy and 0.938 ROC-AUC score
+- 🔮 **Scam Probability**: Returns precise probability score (0-100%) for scam detection
+- 🐍 **Python API Server**: Flask-based REST API for model inference
+- 🔄 **Node.js Integration**: Easy integration with existing Node.js backend
+- 📊 **Model Metrics**: Detailed performance metrics and feature importance visualization
+
 ### Training Data Collection (For ML Model)
 
 - 🎯 **45 Feature Extraction**: Comprehensive feature engineering for XGBoost training
@@ -215,6 +224,17 @@ Get statistics about collected training data
 │   ├── fraud/                    # 85 scam images
 │   └── normal/                   # 43 normal images
 │
+├── lumos_XGBoost/                # ML Model (Python)
+│   ├── api_server.py             # Flask API server
+│   ├── train_model.py            # Model training script
+│   ├── predict.py                # Prediction script
+│   ├── scam_detector_model.pkl   # Trained XGBoost model
+│   ├── feature_columns.json      # 45 feature definitions
+│   ├── model_metrics.json        # Performance metrics
+│   ├── requirements.txt          # Python dependencies
+│   ├── nodejs_example.js         # Node.js integration example
+│   └── README.md                 # Model documentation
+│
 ├── test.html                     # Web UI
 ├── styles/                       # CSS files
 ├── scripts/                      # Frontend JS
@@ -223,13 +243,27 @@ Get statistics about collected training data
 
 ## Tech Stack
 
+### Backend & APIs
+
 - **Runtime**: Node.js v22.13.0
 - **Framework**: Express.js
 - **HTTP Client**: Axios
 - **AI**: OpenAI GPT-4o-mini
 - **OCR**: Tesseract.js
 - **APIs**: Google Safe Browsing v4, Twilio Lookup v2
-- **Frontend**: Vanilla HTML/CSS/JS with dark mode
+
+### Machine Learning
+
+- **Model**: XGBoost Classifier
+- **Language**: Python 3.x
+- **API Framework**: Flask + Flask-CORS
+- **Libraries**: pandas, numpy, scikit-learn, xgboost, joblib
+- **Accuracy**: 78.3% with 0.938 ROC-AUC
+
+### Frontend
+
+- **UI**: Vanilla HTML/CSS/JS with dark mode
+- **Styling**: SCSS preprocessor
 
 ## Training Data Collection
 
@@ -243,7 +277,7 @@ Get statistics about collected training data
 npm run dev
 ```
 
-3. **Run batch processing** (in another terminal):
+1. **Run batch processing** (in another terminal):
 
 ```bash
 node training/scripts/scan-images.js
@@ -287,6 +321,90 @@ This will:
 **Statistical Features (3)**:
 
 - text_entropy, readability_score, sentence_complexity
+
+## XGBoost Model Usage
+
+The XGBoost model is a Python-based machine learning model that can predict scam probability based on 45 extracted features.
+
+### Setup XGBoost Model
+
+1. **Navigate to the model directory**:
+
+```bash
+cd lumos_XGBoost
+```
+
+1. **Install Python dependencies**:
+
+```bash
+pip install -r requirements.txt
+```
+
+1. **Train the model** (optional, model is pre-trained):
+
+```bash
+python train_model.py
+```
+
+1. **Start the Flask API server**:
+
+```bash
+python api_server.py
+```
+
+The API will run on `http://localhost:5000`
+
+### XGBoost API Endpoints
+
+#### Health Check
+
+```http
+GET http://localhost:5000/health
+```
+
+#### Predict Scam Probability
+
+```http
+POST http://localhost:5000/predict
+Content-Type: application/json
+
+{
+  "char_count": 156,
+  "word_count": 23,
+  "url_count": 1,
+  "phone_count": 1,
+  "urgency_level": 8,
+  "threat_level": 7,
+  ... (all 45 features)
+}
+```
+
+**Response:**
+
+```json
+{
+  "scam_probability": 0.87,
+  "is_scam": true,
+  "confidence": "high"
+}
+```
+
+#### Get Model Information
+
+```http
+GET http://localhost:5000/model/info
+```
+
+### Integration with Node.js Backend
+
+See `lumos_XGBoost/nodejs_example.js` for integration example. The Node.js backend can:
+
+1. Extract 45 features using existing services (parser, safeBrowsing, twilioLookup, openaiCheck, featureExtractor)
+2. Send features to XGBoost Flask API at `http://localhost:5000/predict`
+3. Receive scam probability (0-100%) from the model
+4. Combine with existing rule-based risk score for final decision
+
+For detailed integration guide, see `lumos_XGBoost/INTEGRATION_GUIDE.md`
 
 ## Development Tips
 

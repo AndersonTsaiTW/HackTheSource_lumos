@@ -1,0 +1,12 @@
+{
+  "name": "scam-detector-client",
+  "version": "1.0.0",
+  "description": "Node.js client for scam detection API",
+  "main": "nodejs_example.js",
+  "scripts": {
+    "test": "node nodejs_example.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

@@ -7,3 +7,17 @@ coverage/
 twilio_2FA_recovery_code.txt
 data_pics/
 training_data.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# XGBoost Model
+lumos_XGBoost/.venv/
