@@ -5,3 +5,4 @@ node_modules/
 dist/
 coverage/
 twilio_2FA_recovery_code.txt
+data_pics/

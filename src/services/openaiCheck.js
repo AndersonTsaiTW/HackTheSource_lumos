@@ -27,10 +27,28 @@ ${content}
 Please respond in the following JSON format:
 {
   "isScam": true/false,
-  "confidence": 0-100 (confidence level),
+  "confidence": 0-100,
   "reason": "reason for determination",
-  "keywords": ["keyword1", "keyword2"]
-}`;
+  "keywords": ["keyword1", "keyword2"],
+  "urgency_level": 0-10,
+  "threat_level": 0-10,
+  "temptation_level": 0-10,
+  "impersonation_type": "bank|government|courier|company|lottery|tech_support|null",
+  "action_requested": "click_link|call_number|transfer_money|provide_info|download|reply|null",
+  "grammar_quality": 0-10,
+  "emotion_triggers": ["fear", "greed", "urgency", "curiosity", "trust"],
+  "credibility_score": 0-10
+}
+
+Field explanations:
+- urgency_level: How urgent or time-sensitive the message appears (0=none, 10=extreme)
+- threat_level: Presence of threatening language or consequences (0=none, 10=severe)
+- temptation_level: Appeal to greed or desire (prizes, money, deals) (0=none, 10=extreme)
+- impersonation_type: What entity is being impersonated (or null if none)
+- action_requested: Primary action the message wants recipient to take
+- grammar_quality: Quality of grammar and spelling (0=very poor, 10=perfect)
+- emotion_triggers: List of emotions being manipulated
+- credibility_score: How legitimate the message appears (0=obviously fake, 10=highly credible)`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",

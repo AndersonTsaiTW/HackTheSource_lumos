@@ -5,6 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import analyzeRouter from './routes/analyze.js';
+import collectDataRouter from '../training/routes/collectData.js';
 
 dotenv.config();
 
@@ -51,10 +52,23 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api', analyzeRouter);
+app.use('/api/training', collectDataRouter);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    endpoints: {
+      production: [
+        'POST /api/analyze - Analyze message for scam detection'
+      ],
+      training: [
+        'POST /api/training/collect-training-data - Collect training data',
+        'GET /api/training/training-stats - Get training statistics'
+      ]
+    }
+  });
 });
 
 app.listen(PORT, () => {
