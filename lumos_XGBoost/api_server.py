@@ -9,6 +9,7 @@ from predict import ScamPredictor
 import traceback
 import sys
 import io
+import os
 
 # Fix Windows encoding issue
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -185,6 +186,9 @@ def model_info():
         }), 500
 
 if __name__ == '__main__':
+    # Get port from environment variable (for Railway, Render, etc.)
+    port = int(os.environ.get('PORT', 5000))
+    
     print("\n" + "=" * 60)
     print("🌐 API Service Started")
     print("=" * 60)
@@ -193,7 +197,7 @@ if __name__ == '__main__':
     print("  POST /predict         - Single message prediction")
     print("  POST /predict/batch   - Batch prediction")
     print("  GET  /model/info      - Model information")
-    print("\nService Address: http://localhost:5000")
+    print(f"\nService Address: http://0.0.0.0:{port}")
     print("=" * 60 + "\n")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)
