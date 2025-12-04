@@ -73,7 +73,7 @@ body.light-mode .header p { color: rgba(45, 55, 72, 0.7); }
 .card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border-radius: 24px; padding: 48px; box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); animation: slideInUp 0.8s ease-out 0.1s both; transition: all 0.3s ease; }
 body.light-mode .card { background: rgba(255, 255, 255, 0.95); box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12), inset 0 1px 1px rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.25); }
 
-.toggle-container { display: flex; gap: 8px; margin-bottom: 32px; background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 16px; width: fit-content; border: 1px solid rgba(0, 212, 255, 0.1); }
+.toggle-container { display: flex; gap: 8px; margin-bottom: 32px; background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 16px; border: 1px solid rgba(0, 212, 255, 0.1); }
 body.light-mode .toggle-container { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.2); }
 
 .toggle-btn { flex: 1; padding: 12px 24px; border: none; background: transparent; color: rgba(255, 255, 255, 0.6); font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 12px; transition: all 0.3s ease; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -185,6 +185,15 @@ body.light-mode .bubble { opacity: 0.95; filter: blur(0px) saturate(1.25); mix-b
 
 /* visually hidden (screen-reader only) utility */
 .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+
+/* Site logo (circular badge aligned with theme-toggle) */
+#logo-link { position: fixed; top: 20px; left: 18px; z-index: 10000; display: inline-flex; align-items: center; justify-content: center; padding: 6px; border-radius: 9999px; overflow: hidden; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); -webkit-tap-highlight-color: transparent; pointer-events: auto; transition: transform .12s ease, filter .12s ease, background .15s ease, border-color .15s ease; backdrop-filter: blur(4px); }
+#logo-link:focus { outline: 3px solid rgba(0,212,255,0.3); outline-offset: 3px; border-radius: 9999px; }
+#site-logo { display: block; width: 50px; height: 50px; object-fit: cover; border-radius: 9999px; transition: transform .12s ease, filter .12s ease; will-change: transform, filter; }
+#logo-link:hover #site-logo { transform: scale(1.06); }
+@media (max-width: 480px) { #logo-link { top: 16px; left: 16px; } #site-logo { width: 44px; height: 44px; } }
+@media (prefers-color-scheme: light) { #logo-link { background: rgba(34,197,94,0.10); border-color: rgba(34,197,94,0.18); } #site-logo { filter: drop-shadow(0 2px 6px rgba(16,24,40,0.06)); } }
+@media (prefers-color-scheme: dark) { #logo-link { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); } #site-logo { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.45)) brightness(.98) saturate(1.05); } }
 
 /* Back-to-top button */
 #back-to-top {
