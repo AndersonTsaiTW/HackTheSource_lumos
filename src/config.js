@@ -9,4 +9,5 @@ export default {
     authToken: process.env.TWILIO_AUTH_TOKEN,
   },
   openaiApiKey: process.env.OPENAI_API_KEY,
+  xgboostApiUrl: process.env.XGBOOST_API_URL || 'http://localhost:5000',
 };

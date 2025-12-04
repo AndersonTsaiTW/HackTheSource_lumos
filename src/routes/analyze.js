@@ -6,6 +6,8 @@ import { lookupPhone } from '../services/twilioLookup.js';
 import { analyzeWithOpenAI } from '../services/openaiCheck.js';
 import { generateResponse } from '../utils/analyzer.js';
 import { extractTextFromImage } from '../services/ocrService.js';
+import { predictScamProbability } from '../services/xgboostService.js';
+import { extractFeaturesForML } from '../services/featureExtractor.js';
 
 const router = express.Router();
 
@@ -43,12 +45,25 @@ router.post('/analyze', async (req, res) => {
       analyzeWithOpenAI(parsed.content),
     ]);
 
-    // 3. Generate comprehensive response
+    // 3. Extract 45 features for ML model
+    const features = extractFeaturesForML(message, parsed, urlResult, phoneResult, aiResult);
+    console.log('🔢 Extracted features for ML model');
+
+    // 4. Call XGBoost ML model for prediction (with fallback)
+    const xgboostResult = await predictScamProbability(features);
+    if (xgboostResult.available) {
+      console.log('🤖 XGBoost prediction:', xgboostResult.scamProbability);
+    } else {
+      console.log('⚠️ XGBoost not available, using rule-based scoring only');
+    }
+
+    // 5. Generate comprehensive response (hybrid scoring)
     const response = generateResponse({
       parsed,
       urlResult,
       phoneResult,
       aiResult,
+      xgboostResult,
     });
 
     res.json(response);
@@ -89,18 +104,26 @@ router.post('/ocr', upload.single('image'), async (req, res) => {
       analyzeWithOpenAI(parsed.content),
     ]);
 
-    // 4. Generate response with OCR results
+    // 4. Extract features for ML model
+    const features = extractFeaturesForML(extractedText, parsed, urlResult, phoneResult, aiResult);
+
+    // 5. Call XGBoost ML model
+    const xgboostResult = await predictScamProbability(features);
+
+    // 6. Generate response with OCR results
     const analysisResult = generateResponse({
       parsed,
       urlResult,
       phoneResult,
       aiResult,
+      xgboostResult,
     });
 
     res.json({
       text: extractedText,
       riskScore: analysisResult.riskScore,
       riskLevel: analysisResult.riskLevel,
+      mlScore: analysisResult.mlScore,
       evidence: analysisResult.evidence,
       action: analysisResult.action,
     });

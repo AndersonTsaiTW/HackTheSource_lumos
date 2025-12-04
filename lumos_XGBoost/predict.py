@@ -56,13 +56,27 @@ class ScamPredictor:
     def _extract_text_features(self, df):
         """Extract text features during prediction (mirrors training process)"""
         
-        # Fill missing text
-        df['message_text'] = df.get('message_text', '').fillna('')
-        df['openai_reason'] = df.get('openai_reason', '').fillna('')
-        df['openai_keywords'] = df.get('openai_keywords', '').fillna('')
-        df['openai_emotion_triggers'] = df.get('openai_emotion_triggers', '').fillna('')
-        df['openai_action_requested'] = df.get('openai_action_requested', '').fillna('')
-        df['openai_impersonation_type'] = df.get('openai_impersonation_type', '').fillna('')
+        # Fill missing text - ensure columns exist first
+        if 'message_text' not in df.columns:
+            df['message_text'] = ''
+        if 'openai_reason' not in df.columns:
+            df['openai_reason'] = ''
+        if 'openai_keywords' not in df.columns:
+            df['openai_keywords'] = ''
+        if 'openai_emotion_triggers' not in df.columns:
+            df['openai_emotion_triggers'] = ''
+        if 'openai_action_requested' not in df.columns:
+            df['openai_action_requested'] = ''
+        if 'openai_impersonation_type' not in df.columns:
+            df['openai_impersonation_type'] = ''
+        
+        # Fill NaN values
+        df['message_text'] = df['message_text'].fillna('')
+        df['openai_reason'] = df['openai_reason'].fillna('')
+        df['openai_keywords'] = df['openai_keywords'].fillna('')
+        df['openai_emotion_triggers'] = df['openai_emotion_triggers'].fillna('')
+        df['openai_action_requested'] = df['openai_action_requested'].fillna('')
+        df['openai_impersonation_type'] = df['openai_impersonation_type'].fillna('')
         
         # 1. TF-IDF from message_text
         if self.tfidf_vectorizer is not None:

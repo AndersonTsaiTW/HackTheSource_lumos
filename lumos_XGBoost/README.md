@@ -1,58 +1,58 @@
-# 詐騙簡訊偵測模型
+# Scam Message Detection Model
 
-使用 XGBoost 訓練的詐騙簡訊分類模型，並提供 REST API 供 Node.js 調用。
+XGBoost-based scam message classification model with REST API for Node.js integration.
 
-## 📊 模型資訊
+## 📊 Model Information
 
-- **訓練資料**: 111 筆簡訊 (77 筆詐騙, 34 筆正常)
-- **演算法**: XGBoost
-- **特徵數**: 33 個
-- **測試準確率**: 78.3%
+- **Training Data**: 111 messages (77 scam, 34 normal)
+- **Algorithm**: XGBoost
+- **Features**: 33
+- **Test Accuracy**: 78.3%
 - **ROC-AUC**: 0.938
-- **交叉驗證 F1**: 0.830 (±0.089)
+- **Cross-validated F1**: 0.830 (±0.089)
 
-## 🚀 快速開始
+## 🚀 Quick Start
 
-### 1. 安裝 Python 相依套件
+### 1. Install Python Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 訓練模型
+### 2. Train Model
 
 ```bash
 python train_model.py
 ```
 
-這會產生：
-- `scam_detector_model.pkl` - 訓練好的模型
-- `feature_importance.png` - 特徵重要性圖表
-- `model_metrics.json` - 模型評估指標
-- `feature_columns.json` - 特徵欄位清單
+This generates:
+- `scam_detector_model.pkl` - Trained model
+- `feature_importance.png` - Feature importance chart
+- `model_metrics.json` - Model evaluation metrics
+- `feature_columns.json` - Feature column list
 
-### 3. 測試預測功能
+### 3. Test Prediction
 
 ```bash
 python predict.py
 ```
 
-### 4. 啟動 API 服務
+### 4. Start API Service
 
 ```bash
 python api_server.py
 ```
 
-服務會在 `http://localhost:5000` 啟動
+Service runs at `http://localhost:5000`
 
-## 🌐 API 端點
+## 🌐 API Endpoints
 
-### 健康檢查
+### Health Check
 ```http
 GET /health
 ```
 
-### 單一訊息預測
+### Single Message Prediction
 ```http
 POST /predict
 Content-Type: application/json
@@ -65,105 +65,105 @@ Content-Type: application/json
 }
 ```
 
-### 批次預測
+### Batch Prediction
 ```http
 POST /predict/batch
 Content-Type: application/json
 
 {
   "messages": [
-    {...特徵1...},
-    {...特徵2...}
+    {...features1...},
+    {...features2...}
   ]
 }
 ```
 
-### 模型資訊
+### Model Info
 ```http
 GET /model/info
 ```
 
-## 📱 Node.js 整合
+## 📱 Node.js Integration
 
-### 1. 安裝 Node.js 相依套件
+### 1. Install Node.js Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. 執行範例
+### 2. Run Example
 
 ```bash
 node nodejs_example.js
 ```
 
-### 3. 在你的 Node.js 專案中使用
+### 3. Use in Your Node.js Project
 
 ```javascript
 const { detectScam } = require('./nodejs_example');
 
-// 準備訊息特徵
+// Prepare message features
 const messageFeatures = {
   message_length: 300,
   contains_urgent_words: 1,
   contains_money_keywords: 1,
-  // ... 其他特徵
+  // ... other features
 };
 
-// 預測
+// Predict
 const result = await detectScam(messageFeatures);
 
 if (result.success) {
-  console.log('是否為詐騙:', result.result.is_scam);
-  console.log('詐騙機率:', result.result.scam_probability);
-  console.log('信心等級:', result.result.confidence);
+  console.log('Is scam:', result.result.is_scam);
+  console.log('Scam probability:', result.result.scam_probability);
+  console.log('Confidence level:', result.result.confidence);
 }
 ```
 
-## 🔑 重要特徵 (Top 10)
+## 🔑 Top Features (Top 10)
 
-1. `avg_word_length` - 平均字詞長度 (18.81%)
-2. `digit_ratio` - 數字比例 (13.86%)
-3. `exclamation_count` - 驚嘆號數量 (8.63%)
-4. `openai_credibility_score` - OpenAI 可信度分數 (8.16%)
-5. `question_count` - 問號數量 (7.42%)
-6. `openai_grammar_quality` - 文法品質 (6.97%)
-7. `openai_urgency_level` - 緊急程度 (6.94%)
-8. `special_char_count` - 特殊字元數量 (6.39%)
-9. `openai_temptation_level` - 誘惑程度 (6.03%)
-10. `contains_link_text` - 包含連結文字 (5.13%)
+1. `avg_word_length` - Average word length (18.81%)
+2. `digit_ratio` - Digit ratio (13.86%)
+3. `exclamation_count` - Exclamation mark count (8.63%)
+4. `openai_credibility_score` - OpenAI credibility score (8.16%)
+5. `question_count` - Question mark count (7.42%)
+6. `openai_grammar_quality` - Grammar quality (6.97%)
+7. `openai_urgency_level` - Urgency level (6.94%)
+8. `special_char_count` - Special character count (6.39%)
+9. `openai_temptation_level` - Temptation level (6.03%)
+10. `contains_link_text` - Contains link text (5.13%)
 
-## 📂 檔案結構
+## 📂 File Structure
 
 ```
 HackTheSource_Model/
-├── training_data.csv          # 訓練資料
-├── train_model.py             # 模型訓練腳本
-├── predict.py                 # 預測腳本
-├── api_server.py              # Flask API 服務
-├── nodejs_example.js          # Node.js 整合範例
-├── requirements.txt           # Python 相依套件
-├── package.json               # Node.js 相依套件
-├── scam_detector_model.pkl    # 訓練好的模型
-├── feature_importance.png     # 特徵重要性圖表
-├── model_metrics.json         # 模型評估指標
-└── feature_columns.json       # 特徵欄位清單
+├── training_data.csv          # Training data
+├── train_model.py             # Model training script
+├── predict.py                 # Prediction script
+├── api_server.py              # Flask API service
+├── nodejs_example.js          # Node.js integration example
+├── requirements.txt           # Python dependencies
+├── package.json               # Node.js dependencies
+├── scam_detector_model.pkl    # Trained model
+├── feature_importance.png     # Feature importance chart
+├── model_metrics.json         # Model evaluation metrics
+└── feature_columns.json       # Feature column list
 ```
 
-## ⚠️ 注意事項
+## ⚠️ Important Notes
 
-1. **資料量較小**: 目前只有 111 筆訓練資料，建議持續收集更多樣本以提升模型效能
-2. **類別不平衡**: 詐騙:正常 = 2.26:1，已使用 class_weight 處理
-3. **誤判率**: 目前可能會有較高的誤判率（把正常訊息判為詐騙），實際使用時需要調整閾值
-4. **特徵工程**: 模型效能高度依賴特徵提取的品質
+1. **Small Dataset**: Currently only 111 training samples. Recommend collecting more samples to improve performance
+2. **Class Imbalance**: Scam:Normal = 2.26:1, handled with class_weight
+3. **False Positive Rate**: May have higher false positive rate (classifying normal as scam). Adjust threshold for production use
+4. **Feature Engineering**: Model performance heavily depends on feature extraction quality
 
-## 🔄 改進建議
+## 🔄 Improvement Suggestions
 
-1. **增加訓練資料**: 收集更多正常簡訊樣本（目標 500-1000 筆）
-2. **調整閾值**: 根據實際需求調整分類閾值（預設 0.5）
-3. **特徵優化**: 分析誤判案例，優化特徵提取邏輯
-4. **定期重訓**: 隨著資料累積定期重新訓練模型
+1. **Increase Training Data**: Collect more normal message samples (target 500-1000)
+2. **Adjust Threshold**: Tune classification threshold based on requirements (default 0.5)
+3. **Feature Optimization**: Analyze misclassified cases, optimize feature extraction
+4. **Regular Retraining**: Retrain model periodically as data accumulates
 
-## 📞 問題回報
+## 📞 Issue Reporting
 
-如有任何問題或建議，請開 issue 討論。
+For any questions or suggestions, please open an issue for discussion.

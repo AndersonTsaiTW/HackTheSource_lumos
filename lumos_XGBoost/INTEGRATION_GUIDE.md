@@ -1,49 +1,543 @@
-# 🔗 Node.js 整合指南
+# 🔗 Node.js Integration & Separation Guide
 
-## 📦 安裝步驟
+> **Note**: This project is already integrated. This guide explains:
+> 1. How to verify the integration is working
+> 2. How to separate the ML model into a standalone service if needed
 
-### 1. 將此資料夾移到你的 Node 專案中
+---
+
+## 📋 Current Integration Status
+
+### ✅ Already Integrated Components
+
+1. **Node.js Services** (in `src/services/`)
+   - `xgboostService.js` - Calls Python API
+   - `featureExtractor.js` - Extracts 45 features
+   - `analyzer.js` - Hybrid scoring (ML + rules)
+
+2. **Python ML Model** (in `lumos_XGBoost/`)
+   - `api_server.py` - Flask API server
+   - `scam_detector_model.pkl` - Trained XGBoost model
+   - `requirements.txt` - Python dependencies
+
+3. **Configuration**
+   - `package.json` - npm scripts for dual-service startup
+   - `src/config.js` - XGBoost API URL configuration
+
+---
+
+## 🚀 Quick Start (Use Current Integration)
+
+### 1. Complete Setup (First Time Only)
 
 ```bash
-# 假設你的 Node 專案在 /path/to/your-node-project
-cp -r HackTheSource_Model /path/to/your-node-project/ml-model
-```
+# Install Node.js dependencies
+npm install
 
-### 2. 安裝 Python 依賴
-
-```bash
-cd ml-model
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-# 或 source .venv/bin/activate  # Linux/Mac
-
+# Install Python dependencies
+cd lumos_XGBoost
 pip install -r requirements.txt
+cd ..
+
+# Add to .env file
+echo "XGBOOST_API_URL=http://localhost:5000" >> .env
 ```
 
-### 3. 安裝 Node.js 依賴
-
-在你的 Node 專案根目錄:
+### 2. Start Both Services
 
 ```bash
-npm install axios
-# 或如果你偏好 fetch API (Node 18+)，可以不用 axios
+# One command to start both Node.js and Python services
+npm run start:all
+```
+
+This will:
+- Start Node.js API on `http://localhost:3000`
+- Start Python Flask API on `http://localhost:5000`
+
+### 3. Test the Integration
+
+```bash
+# Test Node.js API (should call Python internally)
+curl -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"message": "URGENT! Click http://bit.ly/scam to claim prize! Call 0912345678"}'
+```
+
+Expected response includes:
+```json
+{
+  "riskScore": 85,
+  "mlScore": 90,
+  "riskLevel": "red",
+  "evidence": [
+    "🤖 ML Model: 90% scam probability (High confidence)",
+    ...
+  ]
+}
 ```
 
 ---
 
-## 🚀 啟動 API 服務
+## 🔧 Troubleshooting Current Integration
 
-### 方式 1: 手動啟動 (開發環境)
+### Issue: Missing XGBOOST_API_URL
 
-```bash
-cd ml-model
-.venv\Scripts\activate
-python api_server.py
+**Symptom**: ML model not being used, only rule-based scoring
+
+**Solution**: Add to `.env`
+```env
+XGBOOST_API_URL=http://localhost:5000
 ```
 
-服務會在 `http://localhost:5000` 啟動
+### Issue: Python Dependencies Not Installed
 
-### 方式 2: 用 Node.js 自動啟動 (推薦)
+**Symptom**: `ModuleNotFoundError` when starting Python service
+
+**Solution**:
+```bash
+cd lumos_XGBoost
+pip install -r requirements.txt
+```
+
+### Issue: Model File Not Found
+
+**Symptom**: `Model not loaded` error
+
+**Solution**: Train the model
+```bash
+cd lumos_XGBoost
+python train_model.py
+```
+
+---
+
+## 📦 How to Separate ML Model (Optional)
+
+If you want to deploy the ML model as a separate microservice:
+
+### Option 1: Separate to Different Server
+
+#### Step 1: Extract ML Model to Separate Project
+
+```bash
+# On your ML server
+mkdir scam-detection-ml-service
+cd scam-detection-ml-service
+
+# Copy only ML files
+cp -r /path/to/HackTheSource_Lumos/lumos_XGBoost/* .
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start service (use production server)
+gunicorn -w 4 -b 0.0.0.0:5000 api_server:app
+```
+
+#### Step 2: Update Node.js Project
+
+In your Node.js project, update `.env`:
+```env
+# Point to remote ML service
+XGBOOST_API_URL=http://ml-server.yourcompany.com:5000
+```
+
+Remove from `package.json` scripts:
+```json
+{
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+    // Remove: "ml:start" and "start:all"
+  }
+}
+```
+
+Keep these Node.js files (they still need to call remote ML service):
+- `src/services/xgboostService.js`
+- `src/services/featureExtractor.js`
+- `src/utils/analyzer.js`
+
+### Option 2: Dockerize ML Service
+
+#### Create `lumos_XGBoost/Dockerfile`
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "api_server:app"]
+```
+
+#### Create `lumos_XGBoost/docker-compose.yml`
+
+```yaml
+version: '3.8'
+
+services:
+  ml-service:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./scam_detector_model.pkl:/app/scam_detector_model.pkl
+      - ./feature_columns.json:/app/feature_columns.json
+    environment:
+      - FLASK_ENV=production
+    restart: always
+```
+
+#### Run ML Service in Docker
+
+```bash
+cd lumos_XGBoost
+docker-compose up -d
+```
+
+#### Update Node.js Project
+
+```env
+# .env
+XGBOOST_API_URL=http://localhost:5000
+# or for remote: http://ml-container:5000
+```
+
+---
+
+## 🏗️ Separation Benefits vs Drawbacks
+
+### Keep Integrated (Current Setup)
+
+**Pros:**
+- ✅ Simple deployment (one project)
+- ✅ Easy local development
+- ✅ No network latency between services
+- ✅ Easier debugging
+
+**Cons:**
+- ❌ Python + Node.js on same server
+- ❌ Can't scale ML service independently
+- ❌ More complex dependency management
+
+### Separate Services
+
+**Pros:**
+- ✅ Independent scaling (scale ML service separately)
+- ✅ Independent deployment and updates
+- ✅ Better resource management
+- ✅ Can reuse ML service for other projects
+
+**Cons:**
+- ❌ Network latency between services
+- ❌ More complex deployment
+- ❌ Need to manage two projects
+- ❌ Potential network failures
+
+---
+
+## 📊 API Endpoints Reference
+
+### 1. Health Check
+
+```http
+GET http://localhost:5000/health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "model_loaded": true
+}
+```
+
+### 2. Single Prediction
+
+```http
+POST http://localhost:5000/predict
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "char_count": 156,
+  "word_count": 23,
+  "url_count": 1,
+  "phone_count": 1,
+  "urgency_level": 8,
+  "threat_level": 7,
+  ... (45 features total)
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "result": {
+    "is_scam": true,
+    "scam_probability": 0.8435,
+    "normal_probability": 0.1565,
+    "confidence": "High",
+    "prediction_label": "Scam"
+  }
+}
+```
+
+### 3. Batch Prediction
+
+```http
+POST http://localhost:5000/predict/batch
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "messages": [
+    {...features1...},
+    {...features2...}
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "results": [
+    {...result1...},
+    {...result2...}
+  ],
+  "count": 2
+}
+```
+
+### 4. Model Info
+
+```http
+GET http://localhost:5000/model/info
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "info": {
+    "feature_count": 45,
+    "features": ["char_count", "word_count", ...]
+  }
+}
+```
+
+---
+
+## 💻 Usage in Node.js
+
+### Option 1: Use Example Module
+
+```javascript
+const { detectScam } = require('./lumos_XGBoost/nodejs_example');
+
+// Prepare message features (45 features)
+const features = {
+  char_count: 156,
+  word_count: 23,
+  url_count: 1,
+  phone_count: 1,
+  urgency_level: 8,
+  // ... other features
+};
+
+// Predict
+const result = await detectScam(features);
+console.log('Is scam:', result.result.is_scam);
+console.log('Probability:', result.result.scam_probability);
+```
+
+### Option 2: Create Your Own Service
+
+```javascript
+const axios = require('axios');
+
+class ScamDetectionService {
+  constructor(apiUrl = 'http://localhost:5000') {
+    this.apiUrl = apiUrl;
+  }
+
+  async predict(features) {
+    try {
+      const response = await axios.post(
+        `${this.apiUrl}/predict`,
+        features
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Prediction failed:', error.message);
+      throw error;
+    }
+  }
+
+  async checkHealth() {
+    const response = await axios.get(`${this.apiUrl}/health`);
+    return response.data;
+  }
+}
+
+// Usage
+const detector = new ScamDetectionService();
+const result = await detector.predict(messageFeatures);
+```
+
+---
+
+## 🔧 Required Features (45 Total)
+
+### Text Features (14)
+- char_count, word_count, digit_count, digit_ratio
+- uppercase_ratio, special_char_count, exclamation_count
+- question_count, has_urgent_keywords, suspicious_word_count
+- max_word_length, avg_word_length, emoji_count, consecutive_caps
+
+### URL Features (8)
+- url_count, has_suspicious_tld, has_ip_address
+- has_url_shortener, avg_url_length, has_https
+- url_path_depth, subdomain_count
+
+### Phone Features (7)
+- phone_count, has_intl_code, is_voip
+- is_mobile, is_valid_phone, phone_carrier_known, has_multiple_phones
+
+### AI Features (12)
+- urgency_level, threat_level, temptation_level
+- impersonation_type, action_requested, grammar_quality
+- emotion_triggers, credibility_score
+- ai_is_scam, ai_confidence, has_scam_keywords, keyword_count
+
+### Statistical Features (3)
+- text_entropy, readability_score, sentence_complexity
+
+### URL Safety (1)
+- google_safe_browsing_flagged
+
+---
+
+## 📊 Response Format
+
+```javascript
+{
+  is_scam: boolean,              // true if message is classified as scam
+  scam_probability: number,      // 0.0 to 1.0
+  normal_probability: number,    // 0.0 to 1.0
+  confidence: string,            // "Low", "Medium", "High"
+  prediction_label: string       // "Scam" or "Normal"
+}
+```
+
+### Confidence Levels
+- **High**: probability > 0.75
+- **Medium**: 0.60 <= probability <= 0.75
+- **Low**: probability < 0.60
+
+---
+
+## 🐛 Troubleshooting
+
+### Issue 1: Connection Failed (ECONNREFUSED)
+**Solution**: Ensure Python API service is running at port 5000
+```bash
+python lumos_XGBoost/api_server.py
+```
+
+### Issue 2: Model Load Failed
+**Solution**: Train the model first
+```bash
+cd lumos_XGBoost
+python train_model.py
+```
+
+### Issue 3: Prediction Error (Missing Features)
+**Solution**: Ensure all 45 features are provided. Check `feature_columns.json` for required feature names.
+
+### Issue 4: Chinese Text Encoding
+**Solution**: Ensure UTF-8 encoding in API requests
+```javascript
+axios.post(url, data, {
+  headers: { 'Content-Type': 'application/json; charset=UTF-8' }
+})
+```
+
+---
+
+## 🔒 Production Recommendations
+
+1. **Use Process Manager**
+   ```bash
+   # For Python service
+   gunicorn -w 4 -b 0.0.0.0:5000 api_server:app
+   
+   # For Node.js service
+   pm2 start src/index.js
+   ```
+
+2. **Add Health Monitoring**
+   - Monitor Python API uptime
+   - Implement auto-restart on failure
+   - Log prediction results
+
+3. **Security**
+   - Add API authentication
+   - Rate limiting
+   - Input validation
+
+4. **Performance**
+   - Use connection pooling
+   - Cache frequent predictions
+   - Batch requests when possible
+
+---
+
+## 📝 Testing
+
+Run the test script:
+```bash
+node lumos_XGBoost/nodejs_example.js
+```
+
+Expected output:
+```
+==========================================================
+🔍 Node.js Scam SMS Detection Example
+==========================================================
+
+1️⃣ Checking service status...
+   Service status: { status: 'healthy', model_loaded: true }
+
+2️⃣ Getting model information...
+   Feature count: 45
+
+3️⃣ Testing scam message detection...
+   ✅ Prediction: Scam (84.35%)
+   Confidence: High
+```
+
+---
+
+## 📞 Need Help?
+
+For more information, see:
+- Main integration guide: [XGBOOST_INTEGRATION.md](../XGBOOST_INTEGRATION.md)
+- Model documentation: [README.md](README.md)
+- Open an issue on GitHub for support
 
 在你的 Node 專案中建立啟動腳本:
 

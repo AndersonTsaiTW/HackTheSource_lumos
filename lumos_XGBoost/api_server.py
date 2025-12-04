@@ -9,7 +9,7 @@ from predict import ScamPredictor
 import traceback
 
 app = Flask(__name__)
-CORS(app)  # 允許跨域請求
+CORS(app)  # Allow cross-origin requests
 
 # Load model
 print("🚀 Starting API service...")

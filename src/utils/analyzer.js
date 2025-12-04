@@ -1,16 +1,26 @@
 /**
  * Generate risk assessment and recommendations from analysis results
  */
-export function generateResponse({ parsed, urlResult, phoneResult, aiResult }) {
+export function generateResponse({ parsed, urlResult, phoneResult, aiResult, xgboostResult }) {
   const evidence = [];
   let riskLevel = 'green'; // green, yellow, red
   let riskScore = 0;
+  let mlScore = 0; // XGBoost ML score
 
-  // Analyze URL riskRL risk
+  // XGBoost ML Model Score (if available)
+  if (xgboostResult && xgboostResult.available) {
+    mlScore = Math.round(xgboostResult.scamProbability * 100);
+    evidence.push(`🤖 ML Model: ${mlScore}% scam probability (${xgboostResult.confidence} confidence)`);
+    
+    // ML model has the highest weight
+    riskScore += mlScore * 0.7; // 70% weight from ML model
+  }
+
+  // Analyze URL risk
   if (urlResult) {
     if (!urlResult.isSafe) {
       evidence.push(`⚠️ URL flagged by Google as ${getThreatTypeName(urlResult.threatType)}`);
-      riskScore += 40;
+      riskScore += xgboostResult?.available ? 15 : 40; // Lower weight if ML is available
     } else if (!urlResult.error) {
       evidence.push('✅ URL not flagged as malicious');
     }
@@ -20,24 +30,23 @@ export function generateResponse({ parsed, urlResult, phoneResult, aiResult }) {
   if (phoneResult) {
     if (phoneResult.lineType === 'voip') {
       evidence.push('⚠️ Phone is VoIP, commonly used in scams');
-      riskScore += 30;
+      riskScore += xgboostResult?.available ? 10 : 30; // Lower weight if ML is available
     } else if (phoneResult.valid) {
       evidence.push(`✅ Phone number is valid (${phoneResult.carrier || 'Unknown carrier'})`);
     } else {
       evidence.push('⚠️ Phone number is invalid or cannot be verified');
-      riskScore += 20;
+      riskScore += xgboostResult?.available ? 7 : 20; // Lower weight if ML is available
     }
   }
 
   // Analyze AI determination
   if (aiResult) {
     if (aiResult.isScam) {
-      // Don't show confidence percentage in evidence
-      evidence.push(`🤖 AI Analysis: Likely Scam`);
+      evidence.push(`🔍 AI Analysis: Likely Scam`);
       evidence.push(`   Reason: ${aiResult.reason}`);
-      riskScore += aiResult.confidence * 0.99;
+      riskScore += xgboostResult?.available ? (aiResult.confidence * 0.3) : (aiResult.confidence * 0.99);
     } else {
-      evidence.push(`🤖 AI Analysis: Considered Legitimate`);
+      evidence.push(`🔍 AI Analysis: Considered Legitimate`);
     }
 
     if (aiResult.keywords && aiResult.keywords.length > 0) {
@@ -45,7 +54,7 @@ export function generateResponse({ parsed, urlResult, phoneResult, aiResult }) {
     }
   }
 
-  // Determine risk leveline risk level
+  // Determine risk level
   if (riskScore >= 60) {
     riskLevel = 'red';
   } else if (riskScore >= 30) {
@@ -58,6 +67,7 @@ export function generateResponse({ parsed, urlResult, phoneResult, aiResult }) {
   return {
     riskLevel,
     riskScore: Math.min(Math.round(riskScore), 99),
+    mlScore: xgboostResult?.available ? mlScore : null, // Add ML score separately
     evidence,
     action,
     parsed: {
@@ -69,6 +79,11 @@ export function generateResponse({ parsed, urlResult, phoneResult, aiResult }) {
       url: urlResult,
       phone: phoneResult,
       ai: aiResult,
+      ml: xgboostResult?.available ? {
+        scamProbability: xgboostResult.scamProbability,
+        isScam: xgboostResult.isScam,
+        confidence: xgboostResult.confidence,
+      } : null,
     },
   };
 }
