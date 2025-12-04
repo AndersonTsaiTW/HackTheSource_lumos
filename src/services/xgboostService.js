@@ -46,6 +46,7 @@ export async function predictScamProbability(features) {
         isScam: response.data.result.is_scam,
         confidence: response.data.result.confidence,
         normalProbability: response.data.result.normal_probability,
+        topScamFactors: response.data.result.top_scam_factors || [],
       };
     } else {
       throw new Error(response.data.error || 'Prediction failed');

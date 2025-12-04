@@ -12,6 +12,14 @@ export function generateResponse({ parsed, urlResult, phoneResult, aiResult, xgb
     mlScore = Math.round(xgboostResult.scamProbability * 100);
     evidence.push(`🤖 ML Model: ${mlScore}% scam probability (${xgboostResult.confidence} confidence)`);
     
+    // Add top contributing factors if available
+    if (xgboostResult.topScamFactors && xgboostResult.topScamFactors.length > 0) {
+      evidence.push('   Top factors contributing to scam detection:');
+      xgboostResult.topScamFactors.slice(0, 5).forEach((factor, index) => {
+        evidence.push(`   ${index + 1}. ${factor.feature}: ${factor.value.toFixed(2)} (importance: ${(factor.importance * 100).toFixed(1)}%)`);
+      });
+    }
+    
     // ML model has the highest weight
     riskScore += mlScore * 0.7; // 70% weight from ML model
   }
@@ -83,6 +91,7 @@ export function generateResponse({ parsed, urlResult, phoneResult, aiResult, xgb
         scamProbability: xgboostResult.scamProbability,
         isScam: xgboostResult.isScam,
         confidence: xgboostResult.confidence,
+        topScamFactors: xgboostResult.topScamFactors || [],
       } : null,
     },
   };
