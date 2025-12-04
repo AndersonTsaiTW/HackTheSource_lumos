@@ -7,6 +7,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from predict import ScamPredictor
 import traceback
+import sys
+import io
+
+# Fix Windows encoding issue
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
