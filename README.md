@@ -1,7 +1,7 @@
-# Scam Message Detection Backend API
+# Scam Message Detection
 
-Hackathon Project - Scam message detection backend service built with Node.js + Express
-
+Hackathon Project - Scam message detection built with Node.js + Express  
+Introduction Document: [Lumos - Clarity_in_Digital_Trust](https://github.com/AndersonTsaiTW/HackTheSource_lumos/blob/main/Lumos_Clarity_in_Digital_Trust.pdf)
 ## Features
 
 - 📝 **Smart Parsing**: Extract URLs, phone numbers, and content from messages using Regex
